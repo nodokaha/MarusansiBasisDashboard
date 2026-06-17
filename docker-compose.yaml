@@ -15,7 +15,7 @@ services:
       - '4296:4296/udp'
       - '10666:10666/tcp'
       - '1234:1234/tcp'
-      - '3000:3000/tcp'
+      - '4000:4000/tcp'
     volumes:
       - './initialresources:/app/initialresources:ro'
       - './config:/app/config'

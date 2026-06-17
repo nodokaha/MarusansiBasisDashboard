@@ -22,7 +22,7 @@ struct BasisHealthResponse {
 async fn main() {
     let app = Router::new().route("/", get(handle_server_info));
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 4000));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     println!("🚀 Dashboard Server running on http://{}", addr);
     
