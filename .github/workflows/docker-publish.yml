@@ -23,7 +23,7 @@ jobs:
 
       # 3. 複数アーキテクチャビルドの準備 (遅いサーバーがラズパイ等の場合もこれで安心)
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v7
+        uses: docker/setup-buildx-action@v4
 
       # 4. ビルドしてDocker Hubにプッシュ
       - name: Build and push Docker image
