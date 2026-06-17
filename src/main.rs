@@ -31,7 +31,7 @@ async fn main() {
 // 2. リクエストを受け取るハンドラ
 async fn handle_server_info() -> Html<String> {
     // 3. 外部のJSON APIを叩く (reqwest)
-    let api_url = "http://localhost:10666/health";
+    let api_url = "http://basis-server:10666/health";
     let response = reqwest::get(api_url).await;
 
     // エラーハンドリングもRustらしく綺麗に
