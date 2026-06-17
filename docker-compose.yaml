@@ -15,6 +15,7 @@ services:
       - '4296:4296/udp'
       - '10666:10666/tcp'
       - '1234:1234/tcp'
+      - '3000:3000/tcp'
     volumes:
       - './initialresources:/app/initialresources:ro'
       - './config:/app/config'
@@ -35,10 +36,7 @@ services:
       context: 'https://github.com/nodokaha/MarusansiBasisDashboard.git#main'
     container_name: dashboard
     restart: unless-stopped
-    ports:
-      - '3000:3000/tcp'
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    network_mode: "service:basis-server"
     depends_on:
       basis-server:
         condition: service_healthy

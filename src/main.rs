@@ -31,7 +31,7 @@ async fn main() {
 
 async fn handle_server_info() -> Html<String> {
     // Docker Compose内のネットワーク名（サービス名）を指定
-    let api_url = "http://host.docker.internal:10666/health";
+    let api_url = "http://localhost:10666/health";
     
     println!("🔄 Fetching health data from: {}", api_url);
     let response = reqwest::get(api_url).await;
