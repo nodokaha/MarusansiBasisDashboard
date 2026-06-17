@@ -24,7 +24,7 @@ async fn main() {
         .route("/", get(handle_index))              // 初回アクセス（土台の画面）
         .route("/api/health", get(handle_health));  // 5秒ごとの更新用API
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 4000));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     println!("🚀 Dashboard Server running on http://{}", addr);
     
