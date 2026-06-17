@@ -32,7 +32,7 @@ services:
 
   marusansi-basis-dashboard:
     build:
-      context: 'https://github.com/nodokaha/MarusansiBasisDashboard'
+      context: 'https://github.com/nodokaha/MarusansiBasisDashboard.git#main'
     container_name: dashboard
     restart: unless-stopped
     ports:
