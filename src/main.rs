@@ -3,15 +3,16 @@ use maud::{html, DOCTYPE};
 use serde::Deserialize;
 use std::net::SocketAddr;
 
-// basis-server の実際のレスポンスに合わせた構造体
+// basis-server の実際のレスポンス型に完全に一致させる
 #[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")] // currentTime などのキャメルケースに対応
+#[serde(rename_all = "camelCase")]
 struct BasisHealthResponse {
     listening: bool,
-    visitors: String,
-    capacity: String,
-    sent: String,
-    recv: String,
+    ready: bool,
+    visitors: u32,
+    capacity: u32,
+    sent: u64,
+    recv: u64,
     current_time: String,
     start_time: String,
     version: String,
@@ -21,7 +22,6 @@ struct BasisHealthResponse {
 async fn main() {
     let app = Router::new().route("/", get(handle_server_info));
 
-    // コンテナ外部（ホスト側）からアクセスできるように 0.0.0.0 にバインド
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     println!("🚀 Dashboard Server running on http://{}", addr);
@@ -30,7 +30,6 @@ async fn main() {
 }
 
 async fn handle_server_info() -> Html<String> {
-    // Docker Compose内のネットワーク名（サービス名）を指定
     let api_url = "http://localhost:10666/health";
     
     println!("🔄 Fetching health data from: {}", api_url);
@@ -38,23 +37,19 @@ async fn handle_server_info() -> Html<String> {
 
     let page_content = match response {
         Ok(res) => {
-            // ステータスコードが 200 OK かチェック
             if !res.status().is_success() {
                 let status_err = format!("サーバーがエラーを返しました (Status: {})", res.status());
                 eprintln!("❌ [Error] {}", status_err);
                 render_error(&status_err)
             } else {
-                // レスポンスのテキストを一旦取得（パース失敗時のログ用）
                 match res.text().await {
                     Ok(text) => {
-                        // JSONをパース
                         match serde_json::from_str::<BasisHealthResponse>(&text) {
                             Ok(data) => {
                                 println!("✅ Successfully fetched and parsed server info.");
                                 render_html(&data)
                             }
                             Err(err) => {
-                                // JSONのパースエラーログを詳細に出力
                                 let parse_err = format!("JSONパース失敗: {}. 生データ: {}", err, text);
                                 eprintln!("❌ [Error] {}", parse_err);
                                 render_error(&parse_err)
@@ -70,7 +65,6 @@ async fn handle_server_info() -> Html<String> {
             }
         }
         Err(err) => {
-            // 通信自体が失敗した場合のエラー（Connection Refusedなど）
             let conn_err = format!("basis-server への接続に失敗しました: {}", err);
             eprintln!("❌ [Error] {}", conn_err);
             render_error(&conn_err)
@@ -80,10 +74,13 @@ async fn handle_server_info() -> Html<String> {
     Html(page_content)
 }
 
-// 実際のデータを表示するHTMLテンプレート
 fn render_html(data: &BasisHealthResponse) -> String {
     let status_color = if data.listening { "green" } else { "red" };
     let status_text = if data.listening { "● 接続受付中 (Listening)" } else { "❌ 停止中 (Not Listening)" };
+    
+    // ready ステータスの色分け
+    let ready_color = if data.ready { "#38bdf8" } else { "#faf089" };
+    let ready_text = if data.ready { "Ready" } else { "Not Ready" };
 
     let markup = html! {
         (DOCTYPE)
@@ -100,18 +97,21 @@ fn render_html(data: &BasisHealthResponse) -> String {
                     ".label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }"
                     ".value { font-size: 18px; font-weight: bold; margin-top: 4px; color: #f8fafc; }"
                     ".status { font-weight: bold; color: " (status_color) "; }"
+                    ".badge { font-size: 12px; padding: 2px 6px; border-radius: 4px; background: #1e293b; border: 1px solid; margin-left: 8px; }"
                 }
             }
             body {
                 div class="card" {
                     h1 { "🖥️ Basis Server Monitor" }
                     
-                    div style="margin-top: 16px;" {
+                    div style="margin-top: 16px; display: flex; align-items: center;" {
                         span class="label" { "ステータス: " }
-                        span class="status" { (status_text) }
+                        span class="status" style="margin-left: 4px;" { (status_text) }
+                        span class="badge" style={"color: " (ready_color) "; border-color: " (ready_color) ";"} { (ready_text) }
                     }
 
                     div class="grid" {
+                        // 数値型になったので、そのままマクロに渡せます
                         div class="item" { div class="label" { "プレイヤー数 / 容量" } div class="value" { (data.visitors) " / " (data.capacity) } }
                         div class="item" { div class="label" { "サーバーバージョン" } div class="value" { "v" (data.version) } }
                         div class="item" { div class="label" { "送信データ量 (Sent)" } div class="value" { (data.sent) " bytes" } }
@@ -129,7 +129,6 @@ fn render_html(data: &BasisHealthResponse) -> String {
     markup.into_string()
 }
 
-// エラー発生時のHTMLテンプレート
 fn render_error(msg: &str) -> String {
     html! {
         (DOCTYPE)
@@ -148,7 +147,6 @@ fn render_error(msg: &str) -> String {
                     h2 style="margin-top: 0; color: #fca5a5;" { "⚠️ ダッシュボードエラー" }
                     p { "basis-server からの情報取得中に以下のエラーが発生しました:" }
                     pre { (msg) }
-                    p style="font-size: 12px; color: #fca5a5;" { "※詳細なログはコンテナの標準出力（docker compose logs）を確認してください。" }
                 }
             }
         }
