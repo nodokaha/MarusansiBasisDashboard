@@ -25,12 +25,6 @@ FROM gcr.io/distroless/cc-debian12 AS runner
 
 WORKDIR /app
 
-# OpenSSLなどの動的ライブラリや、HTTPS通信用のルート証明書をインストール
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    libssl3 \
-    && rm -rf /var/lib/apt/lists/*
-
 # ビルドステージからコンパイル済みのバイナリだけをコピー
 # ※ axum-api-template の部分は、Cargo.tomlの [package] name に合わせて変更してください
 COPY --from=builder /app/target/release/MarusansiBasisDashboard ./app-server
