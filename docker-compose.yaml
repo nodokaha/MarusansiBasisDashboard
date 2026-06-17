@@ -37,6 +37,8 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000/tcp'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       basis-server:
         condition: service_healthy
