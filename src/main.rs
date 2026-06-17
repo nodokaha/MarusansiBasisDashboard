@@ -39,7 +39,6 @@ async fn handle_index() -> Html<String> {
             head {
                 meta charset="utf-8";
                 title { "Basis Server Dashboard" }
-                // 💡 htmx を CDN から読み込む（これだけでJS不要に！）
                 script src="https://unpkg.com/htmx.org@1.9.10" {}
                 style {
                     "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; padding: 40px; color: #e2e8f0; }"
@@ -54,10 +53,6 @@ async fn handle_index() -> Html<String> {
                 }
             }
             body {
-                // 💡 ここの属性が重要！
-                // hx-get: どこにリクエストを送るか
-                // hx-trigger: どのタイミングで（every 5s = 5秒ごと）
-                // hx-swap: 取得したHTMLをどうするか（innerHTML = このdivの中身を置き換える）
                 div class="card" hx-get="/api/health" hx-trigger="load, every 5s" hx-swap="innerHTML" {
                     // 初回ロード時はローディングメッセージを表示
                     p { "サーバー情報を読み込み中..." }

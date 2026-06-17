@@ -32,8 +32,8 @@ COPY --from=builder /app/target/release/MarusansiBasisDashboard ./app-server
 # コンテナ外部からアクセスできるように環境変数を設定（任意）
 ENV RUST_LOG=info
 
-# ポート3000を開放
-EXPOSE 3000
+# ポート4000を開放
+EXPOSE 4000
 
 # バイナリを直接実行
 CMD ["./app-server"]
