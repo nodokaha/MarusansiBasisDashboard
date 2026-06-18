@@ -12,7 +12,6 @@ use std::net::SocketAddr;
 #[serde(rename_all = "camelCase")]
 struct BasisHealthResponse {
     listening: bool,
-    ready: bool,
     visitors: u32,
     capacity: u32,
     sent: u64,
