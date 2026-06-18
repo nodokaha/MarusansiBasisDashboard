@@ -14,6 +14,7 @@ RUN rm -rf src
 
 # 実際のソースコードをコピーして本番ビルド
 COPY src ./src
+COPY templates ./templates
 # main.rsのタイムスタンプを更新して、確実に再ビルドさせる
 RUN touch src/main.rs
 RUN cargo build --release
@@ -26,7 +27,6 @@ FROM gcr.io/distroless/cc-debian12 AS runner
 WORKDIR /app
 
 # ビルドステージからコンパイル済みのバイナリだけをコピー
-# ※ axum-api-template の部分は、Cargo.tomlの [package] name に合わせて変更してください
 COPY --from=builder /app/target/release/MarusansiBasisDashboard ./app-server
 
 # コンテナ外部からアクセスできるように環境変数を設定（任意）
