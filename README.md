@@ -1,5 +1,14 @@
 # MarusansiBasisDashboard
 
+## Live Demo
+You can access the live dashboard here:
+http://marusankakusikakuonline.com:4000/
+
+## Screenshot
+![Dashboard Screenshot](./ss.png)
+
+## Server Deploy Example
+
 ```docker-compose.yaml
 services:
   basis-server:

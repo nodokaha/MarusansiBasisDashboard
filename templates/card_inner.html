@@ -1,23 +1,20 @@
-<h1>🖥️ Basis Server Monitor</h1>
+<h1>🖥️ {{ i18n.title }}</h1>
 
 <div style="margin-top: 16px; display: flex; align-items: center;">
-    <span class="label">ステータス: </span>
+    <span class="label">{{ i18n.status_label }} </span>
     <span class="status" style="margin-left: 4px; color: {% if data.listening %}green{% else %}red{% endif %};">
-        {% if data.listening %}● 接続受付中 (Listening){% else %}❌ 停止中 (Not Listening){% endif %}
+        {% if data.listening %}{{ i18n.status_listening }}{% else %}{{ i18n.status_stopped }}{% endif %}
     </span>
-    <span class="badge" style="margin-left: 8px; font-size: 12px; padding: 2px 6px; border-radius: 4px; background: #1e293b; border: 1px solid {% if data.ready %}#38bdf8{% else %}#faf089{% endif %}; color: {% if data.ready %}#38bdf8{% else %}#faf089{% endif %};">
-        {% if data.ready %}Ready{% else %}Not Ready{% endif %}
-    </span>
-</div>
+    </div>
 
 <div class="grid">
-    <div class="item"><div class="label">プレイヤー数 / 容量</div><div class="value">{{ data.visitors }} / {{ data.capacity }}</div></div>
-    <div class="item"><div class="label">サーバーバージョン</div><div class="value">v{{ data.version }}</div></div>
-    <div class="item"><div class="label">送信データ量 (Sent)</div><div class="value">{{ data.sent }} bytes</div></div>
-    <div class="item"><div class="label">受信データ量 (Recv)</div><div class="value">{{ data.recv }} bytes</div></div>
+    <div class="item"><div class="label">{{ i18n.players_label }}</div><div class="value">{{ data.visitors }} / {{ data.capacity }}</div></div>
+    <div class="item"><div class="label">{{ i18n.version_label }}</div><div class="value">v{{ data.version }}</div></div>
+    <div class="item"><div class="label">{{ i18n.sent_label }}</div><div class="value">{{ data.sent }} bytes</div></div>
+    <div class="item"><div class="label">{{ i18n.recv_label }}</div><div class="value">{{ data.recv }} bytes</div></div>
 </div>
 
 <div style="margin-top: 20px; font-size: 11px; color: #64748b; text-align: right;">
-    <div>起動時刻: {{ data.start_time }}</div>
-    <div>現在時刻: {{ data.current_time }}</div>
+    <div>{{ i18n.start_time_label }} {{ data.start_time }}</div>
+    <div>{{ i18n.current_time_label }} {{ data.current_time }}</div>
 </div>

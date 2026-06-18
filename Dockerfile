@@ -15,6 +15,7 @@ RUN rm -rf src
 # 実際のソースコードをコピーして本番ビルド
 COPY src ./src
 COPY templates ./templates
+COPY locales ./locales
 # main.rsのタイムスタンプを更新して、確実に再ビルドさせる
 RUN touch src/main.rs
 RUN cargo build --release
