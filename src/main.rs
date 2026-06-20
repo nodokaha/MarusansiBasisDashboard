@@ -1,14 +1,16 @@
 use askama::Template;
 use axum::{
     routing::get,
-    response::Html,
+    response::{Html, IntoResponse},
+    Json,
     Router,
 };
-use axum::http::HeaderMap;
-use serde::Deserialize;
+use axum::http::{HeaderMap, StatusCode};
+use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use std::env;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 struct BasisHealthResponse {
     listening: bool,
@@ -60,12 +62,19 @@ struct ErrorInnerTemplate {
 
 #[tokio::main]
 async fn main() {
-    // ルートを2つに分ける
-    let app = Router::new()
-        .route("/", get(handle_index))              // 初回アクセス（土台の画面）
-        .route("/api/health", get(handle_health));  // 5秒ごとの更新用API
+    // 1. サーバー起動ポートを環境変数から取得 (デフォルト: 4000)
+    let port: u16 = env::var("PORT")
+        .unwrap_or_else(|_| "4000".to_string())
+        .parse()
+        .expect("PORT must be a valid number");
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 4000));
+    // ルートの追加
+    let app = Router::new()
+        .route("/", get(handle_index))               // 初回アクセス（土台の画面）
+        .route("/api/health", get(handle_health))    // 5秒ごとの更新用API (HTML)
+        .route("/api/health/json", get(handle_health_json)); // JSONをそのまま返すAPI
+
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     println!("🚀 Dashboard Server running on http://{}", addr);
     
@@ -87,43 +96,48 @@ fn get_locale(headers: &HeaderMap) -> LocaleDict {
     toml::from_str(toml_str).unwrap()
 }
 
+// 共通の外部APIリクエスト処理用ヘルパー関数
+async fn fetch_health_data() -> Result<BasisHealthResponse, String> {
+    // 2. Healthポートを環境変数から取得 (デフォルト: 10666)
+    let health_port = env::var("HEALTH_PORT").unwrap_or_else(|_| "10666".to_string());
+    let api_url = format!("http://localhost:{}/health", health_port);
+
+    let response = reqwest::get(&api_url).await.map_err(|e| e.to_string())?;
+
+    if !response.status().is_success() {
+        return Err(format!("Status: {}", response.status()));
+    }
+
+    let text = response.text().await.map_err(|e| e.to_string())?;
+    let res_data = serde_json::from_str::<BasisHealthResponse>(&text).map_err(|e| e.to_string())?;
+    
+    Ok(res_data)
+}
+
 async fn handle_index(headers: HeaderMap) -> Html<String> {
     let i18n = get_locale(&headers);
     Html(IndexTemplate { i18n }.render().unwrap())
 }
 
+// HTMLテンプレートを返す既存のハンドラ (共通関数を使う形に整理)
 async fn handle_health(headers: HeaderMap) -> Html<String> {
     let i18n = get_locale(&headers);
-    let api_url = "http://localhost:10666/health";
-    let response = reqwest::get(api_url).await;
 
-    let html_content = match response {
-        Ok(res) => {
-            if !res.status().is_success() {
-                let err_msg = format!("Status: {}", res.status());
-                ErrorInnerTemplate { msg: err_msg, i18n }.render().unwrap()
-            } else {
-                match res.text().await {
-                    Ok(text) => {
-                        match serde_json::from_str::<BasisHealthResponse>(&text) {
-                            Ok(res_data) => {
-                                CardInnerTemplate { data: res_data, i18n }.render().unwrap()
-                            }
-                            Err(err) => {
-                                ErrorInnerTemplate { msg: err.to_string(), i18n }.render().unwrap()
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        ErrorInnerTemplate { msg: err.to_string(), i18n }.render().unwrap()
-                    }
-                }
-            }
-        }
-        Err(err) => {
-            ErrorInnerTemplate { msg: err.to_string(), i18n }.render().unwrap()
-        }
+    let html_content = match fetch_health_data().await {
+        Ok(res_data) => CardInnerTemplate { data: res_data, i18n }.render().unwrap(),
+        Err(err_msg) => ErrorInnerTemplate { msg: err_msg, i18n }.render().unwrap(),
     };
     
     Html(html_content)
+}
+
+// 3. JSONをそのまま返す新しいハンドラ
+async fn handle_health_json() -> impl IntoResponse {
+    match fetch_health_data().await {
+        Ok(res_data) => (StatusCode::OK, Json(res_data)).into_response(),
+        Err(err_msg) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "error": err_msg })),
+        ).into_response(),
+    }
 }
