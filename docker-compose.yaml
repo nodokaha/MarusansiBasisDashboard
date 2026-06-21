@@ -39,6 +39,7 @@ services:
     network_mode: "service:basis-server"
     environment:
       PORT: 4000
+      HEALTH_PORT: 10666
     depends_on:
       basis-server:
         condition: service_healthy

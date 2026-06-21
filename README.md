@@ -42,13 +42,16 @@ services:
       timeout: 10s
       retries: 3
       start_period: 2s
+
   marusansi-basis-dashboard:
     image: 'nodokaha/basis-dashboard:latest'
     container_name: dashboard
     restart: unless-stopped
-    network_mode: 'service:basis-server'
+    network_mode: "service:basis-server"
+    environment:
+      PORT: 4000
+      HEALTH_PORT: 10666
     depends_on:
       basis-server:
         condition: service_healthy
-
 ```
