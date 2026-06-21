@@ -5,6 +5,7 @@ use axum::{
     Json,
     Router,
 };
+use tower_http::cors::{Any, CorsLayer};
 use axum::http::{HeaderMap, StatusCode};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
@@ -62,6 +63,10 @@ struct ErrorInnerTemplate {
 
 #[tokio::main]
 async fn main() {
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods([axum::http::Method::GET]);
+
     // 1. サーバー起動ポートを環境変数から取得 (デフォルト: 4000)
     let port: u16 = env::var("PORT")
         .unwrap_or_else(|_| "4000".to_string())
@@ -70,9 +75,10 @@ async fn main() {
 
     // ルートの追加
     let app = Router::new()
-        .route("/", get(handle_index))               // 初回アクセス（土台の画面）
-        .route("/api/health", get(handle_health))    // 5秒ごとの更新用API (HTML)
-        .route("/api/health/json", get(handle_health_json)); // JSONをそのまま返すAPI
+        .route("/", get(handle_index))
+        .route("/api/health", get(handle_health))
+        .route("/api/health/json", get(handle_health_json))
+        .layer(cors);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
