@@ -301,7 +301,6 @@ async fn handle_get_players(headers: HeaderMap) -> impl IntoResponse {
         Ok(res) if res.status().is_success() => {
             let res_body = res.json::<PlayersResponse>().await.unwrap_or(PlayersResponse { players: vec![] });
             let players = res_body.players;
-            info!("Players: {:?}", players);
             Html(PlayersInnerTemplate { players, i18n }.render().unwrap()).into_response()
         }
         Ok(res) => {
