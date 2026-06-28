@@ -1,0 +1,26 @@
+{% if players.is_empty() %}
+    <p>現在接続中のプレイヤーはいません。</p>
+{% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>NetID</th>
+                <th>表示名</th>
+                <th>プラットフォーム</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in players %}
+            <tr>
+                <td><code>{{ player.net_id }}</code></td>
+                <td><strong>{{ player.display_name }}</strong><br><small style="color:#666;">{{ player.uuid }}</small></td>
+                <td>{{ player.platform }}</td>
+                <td>
+                    <button onclick="sendPlayerAnnounce('{{ player.uuid }}')">💬 DM</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}

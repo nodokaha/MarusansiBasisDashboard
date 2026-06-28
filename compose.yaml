@@ -11,9 +11,11 @@ services:
       PeerLimit: 1024
       EnableStatistics: true
       EnableConsole: false
+      ApiEnabled: true
     ports:
       - '4296:4296/udp'
       - '10666:10666/tcp'
+      - '10667:10667/tcp'
       - '1234:1234/tcp'
       - '4000:4000/tcp'
     volumes:
@@ -40,6 +42,8 @@ services:
     environment:
       PORT: 4000
       HEALTH_PORT: 10666
+      API_URL_BASE: http://localhost:10668
+      API_BEARER_TOKEN: test_api_key
     depends_on:
       basis-server:
         condition: service_healthy

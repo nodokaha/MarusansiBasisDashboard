@@ -1,0 +1,27 @@
+{% if worlds.is_empty() %}
+    <p>ロードされているワールドはありません。</p>
+{% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>ワールドID / 名</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for world in worlds %}
+            <tr>
+                <td>
+                    <strong>{{ world.id }}</strong>
+                    {% if let Some(name) = world.name %}
+                        <br><span style="color:#555;">{{ name }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="danger" onclick="deleteWorld('{{ world.id }}')">❌ Unload</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ i18n.title }} - Admin Panel</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f4f6f9; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .flex { display: flex; gap: 20px; }
+        .flex-1 { flex: 1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 100px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        button { background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #bd2130; }
+        input, select { padding: 8px; margin: 4px 0; box-sizing: border-box; }
+        .form-group { margin-bottom: 12px; display: flex; flex-direction: column; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ i18n.title }} - Control Panel</h1>
+        
+        <div class="section">
+            <h2>📢 全体アナウンス送信</h2>
+            <div class="flex">
+                <input type="text" id="announce-msg" placeholder="メッセージを入力..." style="flex: 1;">
+                <button onclick="sendAnnounce()">配信</button>
+            </div>
+        </div>
+
+        <div class="flex">
+            <div class="section flex-1">
+                <h2>👥 接続中のプレイヤー</h2>
+                <button onclick="loadPlayers()">更新</button>
+                <div id="players-container" style="margin-top: 15px;">{{ i18n.loading }}</div>
+            </div>
+
+            <div class="section flex-1">
+                <h2>🌐 ロード済みのワールド</h2>
+                <button onclick="loadWorlds()">更新</button>
+                <button class="danger" onclick="clearWorlds()">すべてのワールドをクリア</button>
+                <div id="worlds-container" style="margin-top: 15px;">{{ i18n.loading }}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>⚙️ ワールド操作</h2>
+            <div class="flex">
+                <div class="flex-1" style="border-right: 1px solid #eee; padding-right: 20px;">
+                    <h3>ワールドの追加 (Load)</h3>
+                    <div class="form-group">
+                        <label>URL</label>
+                        <input type="text" id="load-url" placeholder="http://...">
+                    </div>
+                    <div class="form-group">
+                        <label>パスワード (任意)</label>
+                        <input type="password" id="load-password">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="load-persistent"> 常駐させる (Persistent)
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>ストラテジー</label>
+                        <input type="text" id="load-strategy" value="default">
+                    </div>
+                    <button onclick="loadWorldSubmit()">ワールドをロード</button>
+                </div>
+
+                <div class="flex-1" style="padding-left: 20px;">
+                    <h3>同期ワールド切り替え (Switch)</h3>
+                    <div class="form-group">
+                        <label>URL</label>
+                        <input type="text" id="switch-url" placeholder="http://...">
+                    </div>
+                    <div class="form-group">
+                        <label>通知メッセージ (任意)</label>
+                        <input type="text" id="switch-announce" placeholder="画面に通知する文言...">
+                    </div>
+                    <div class="form-group">
+                        <label>遅延（秒: 0〜300）</label>
+                        <input type="number" id="switch-delay" value="0" min="0" max="300">
+                    </div>
+                    <button onclick="switchWorldSubmit()">同期切り替え実行</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 非同期リクエスト用ヘルパー
+        async fn apiCall(url, method, body = null) {
+            let options = { method };
+            if (body) {
+                options.headers = { 'Content-Type': 'application/json' };
+                options.body = JSON.stringify(body);
+            }
+            let res = await fetch(url, options);
+            if (!res.ok) alert('エラーが発生しました: ' + res.statusText);
+            return res;
+        }
+
+        // HTML部分テンプレートの読み込み
+        async fn loadPlayers() {
+            let res = await fetch('/admin/players');
+            if (res.ok) document.getElementById('players-container').innerHTML = await res.text();
+        }
+        async fn loadWorlds() {
+            let res = await fetch('/admin/worlds');
+            if (res.ok) document.getElementById('worlds-container').innerHTML = await res.text();
+        }
+
+        // 各種アクション
+        async fn sendAnnounce() {
+            let message = document.getElementById('announce-msg').value;
+            if(!message) return;
+            let res = await apiCall('/admin/announce', 'POST', { message });
+            if(res.ok) { document.getElementById('announce-msg').value = ''; alert('送信しました'); }
+        }
+
+        async fn sendPlayerAnnounce(uuid) {
+            let message = prompt("プレイヤーへのダイレクトメッセージを入力してください:");
+            if(!message) return;
+            await apiCall(`/admin/announce/${uuid}`, 'POST', { message });
+        }
+
+        async fn loadWorldSubmit() {
+            let payload = {
+                url: document.getElementById('load-url').value,
+                password: document.getElementById('load-password').value || null,
+                persistent: document.getElementById('load-persistent').checked,
+                strategy: document.getElementById('load-strategy').value
+            };
+            let res = await apiCall('/admin/worlds/load', 'POST', payload);
+            if(res.ok) { alert('ロード要求を送信しました'); loadWorlds(); }
+        }
+
+        async fn switchWorldSubmit() {
+            let payload = {
+                url: document.getElementById('switch-url').value,
+                password: null,
+                persistent: false,
+                strategy: "default",
+                announce: document.getElementById('switch-announce').value || null,
+                delay: parseInt(document.getElementById('switch-delay').value, 10)
+            };
+            let res = await apiCall('/admin/worlds/switch', 'POST', payload);
+            if(res.ok) alert('ワールド切り替え要求を送信しました');
+        }
+
+        async fn deleteWorld(id) {
+            if(!confirm('このワールドをアンロードしますか？')) return;
+            let res = await apiCall(`/admin/worlds/${id}`, 'DELETE');
+            if(res.ok) loadWorlds();
+        }
+
+        async fn clearWorlds() {
+            if(!confirm('本当にすべてのワールドをクリアしますか？')) return;
+            let res = await apiCall('/admin/worlds/clear', 'DELETE');
+            if(res.ok) loadWorlds();
+        }
+
+        // 初期読み込み
+        window.onload = fn() {
+            loadPlayers();
+            loadWorlds();
+        };
+    </script>
+</body>
+</html>
