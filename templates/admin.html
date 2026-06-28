@@ -9,21 +9,25 @@
         .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .flex { display: flex; gap: 20px; }
         .flex-1 { flex: 1; }
-        table { width: 100%; border-collapse: collapse; margin-top: 100px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
+        
         button { background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
         button:hover { background: #0056b3; }
         button.danger { background: #dc3545; }
         button.danger:hover { background: #bd2130; }
         input, select { padding: 8px; margin: 4px 0; box-sizing: border-box; }
         .form-group { margin-bottom: 12px; display: flex; flex-direction: column; }
-        
-        /* 追加: ラジオボタン用のスタイル */
+
         .radio-group { display: flex; gap: 15px; margin: 6px 0; }
         .radio-group label { display: flex; align-items: center; gap: 4px; font-weight: normal; cursor: pointer; }
         .radio-group input { margin: 0; cursor: pointer; }
+
+        .health-card { background: #e9ecef; padding: 15px; border-radius: 6px; font-weight: bold; }
     </style>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 <body>
     <div class="container">
@@ -108,7 +112,6 @@
     </div>
 
     <script>
-        // 非同期リクエスト用ヘルパー
         async function apiCall(url, method, body = null) {
             let options = { method };
             if (body) {
@@ -120,7 +123,6 @@
             return res;
         }
 
-        // HTML部分テンプレートの読み込み
         async function loadPlayers() {
             let res = await fetch('/admin/players');
             if (res.ok) document.getElementById('players-container').innerHTML = await res.text();
@@ -130,7 +132,6 @@
             if (res.ok) document.getElementById('worlds-container').innerHTML = await res.text();
         }
 
-        // 各種アクション
         async function sendAnnounce() {
             let message = document.getElementById('announce-msg').value;
             if(!message) return;
@@ -144,7 +145,6 @@
             await apiCall(`/admin/announce/${uuid}`, 'POST', { message });
         }
 
-        // 変更点: ラジオボタンの選択状態を取得するように修正
         async function loadWorldSubmit() {
             const checkedRadio = document.querySelector('input[name="load-strategy"]:checked');
             const strategyValue = checkedRadio ? checkedRadio.value : "synchronized";
@@ -159,7 +159,6 @@
             if(res.ok) { alert('ロード要求を送信しました'); loadWorlds(); }
         }
 
-        // 変更点: ラジオボタンの選択状態を取得するように修正
         async function switchWorldSubmit() {
             const checkedRadio = document.querySelector('input[name="switch-strategy"]:checked');
             const strategyValue = checkedRadio ? checkedRadio.value : "synchronized";
@@ -188,10 +187,14 @@
             if(res.ok) loadWorlds();
         }
 
-        // 初期読み込み
         window.onload = function() {
             loadPlayers();
             loadWorlds();
+
+            setInterval(function() {
+                loadPlayers();
+                loadWorlds();
+            }, 5000);
         };
     </script>
 </body>
