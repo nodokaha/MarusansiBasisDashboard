@@ -169,7 +169,7 @@ async fn main() {
         .route("/admin/worlds/load", axum::routing::post(handle_post_world_load))
         .route("/admin/worlds/switch", axum::routing::post(handle_switch_world))
         .route("/admin/worlds/clear", axum::routing::delete(handle_clear_worlds))
-        .route("/admin/worlds/{id}", axum::routing::delete(handle_delete_world))
+        .route("/admin/worlds/{net_id}", axum::routing::delete(handle_delete_world))
         .route("/admin/announce", axum::routing::post(handle_announce_all))
         .route("/admin/announce/{uuid}", axum::routing::post(handle_announce_user))
         .layer(cors)
@@ -341,9 +341,9 @@ async fn handle_post_world_load(Json(payload): Json<LoadWorldPayload>) -> impl I
     }
 }
 
-async fn handle_delete_world(Path(id): Path<String>) -> impl IntoResponse {
-    info!("Triggering world unload for ID: {}", id);
-    match send_api_request::<()>(reqwest::Method::DELETE, &format!("/api/worlds/{}", id), None).await {
+async fn handle_delete_world(Path(net_id): Path<String>) -> impl IntoResponse {
+    info!("Triggering world unload for ID: {}", net_id);
+    match send_api_request::<()>(reqwest::Method::DELETE, &format!("/api/worlds/{}", net_id), None).await {
         Ok(res) if res.status().is_success() => StatusCode::OK,
         _ => StatusCode::INTERNAL_SERVER_ERROR,
     }
