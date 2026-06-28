@@ -9,13 +9,12 @@ use axum::extract::Path;
 use reqwest::header::AUTHORIZATION;
 use tracing_subscriber::EnvFilter;
 use tower_http::cors::{Any, CorsLayer};
-use tower_http::trace::TraceLayer; // 追加: HTTPリクエスト追跡用
+use tower_http::trace::TraceLayer;
 use axum::http::{HeaderMap, StatusCode};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::env;
 
-// 追加: tracingのログマクロをインポート
 use tracing::{info, warn, error};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -78,6 +77,11 @@ pub struct Player {
     platform: String,
 }
 
+#[derive(Deserialize, Debug)]
+struct PlayersResponse {
+    players: Vec<Player>,
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct World {
     id: String,
@@ -131,7 +135,7 @@ struct WorldsInnerTemplate {
 async fn main() {
     let filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new("MarusansiBasisDashboard=info,tower_http=info"));
-    
+
     tracing_subscriber::fmt()
         .with_env_filter(filter)
         .init();
@@ -158,7 +162,7 @@ async fn main() {
         .route("/admin/announce", axum::routing::post(handle_announce_all))
         .route("/admin/announce/{uuid}", axum::routing::post(handle_announce_user))
         .layer(cors)
-        .layer(TraceLayer::new_for_http()); // 追加: インバウンドHTTPリクエストを自動ロギング
+        .layer(TraceLayer::new_for_http());
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
@@ -284,7 +288,8 @@ async fn handle_get_players(headers: HeaderMap) -> impl IntoResponse {
     let i18n = get_locale(&headers);
     match send_api_request::<()>(reqwest::Method::GET, "/api/players", None).await {
         Ok(res) if res.status().is_success() => {
-            let players = res.json::<Vec<Player>>().await.unwrap_or_default();
+            let res_body = res.json::<PlayersResponse>().await.unwrap_or(PlayersResponse { players: vec![] });
+            let players = res_body.players;
             info!("Players: {:?}", players);
             Html(PlayersInnerTemplate { players, i18n }.render().unwrap()).into_response()
         }
