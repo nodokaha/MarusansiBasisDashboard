@@ -84,8 +84,19 @@ struct PlayersResponse {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct World {
-    id: String,
+    #[serde(rename = "netId")]
+    net_id: String,
+    url: String,
+    persistent: bool,
+    #[serde(rename = "adminLocked")]
+    admin_locked: bool,
+    strategy: u32,
     name: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+struct WorldsResponse {
+    worlds: Vec<World>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -308,7 +319,8 @@ async fn handle_get_worlds(headers: HeaderMap) -> impl IntoResponse {
     let i18n = get_locale(&headers);
     match send_api_request::<()>(reqwest::Method::GET, "/api/worlds", None).await {
         Ok(res) if res.status().is_success() => {
-            let worlds = res.json::<Vec<World>>().await.unwrap_or_default();
+            let res_body = res.json::<WorldsResponse>().await.unwrap_or(WorldsResponse { worlds: vec![] });
+            let worlds = res_body.worlds;
             Html(WorldsInnerTemplate { worlds, i18n }.render().unwrap()).into_response()
         }
         Ok(res) => {
