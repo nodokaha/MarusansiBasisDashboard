@@ -4,7 +4,8 @@
     <table>
         <thead>
             <tr>
-                <th>ワールドID / 名</th>
+                <th>ワールド情報</th>
+                <th>設定</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -12,10 +13,18 @@
             {% for world in worlds %}
             <tr>
                 <td>
-                    <strong>{{ world.net_id }}</strong>
+                    <strong>ID:</strong> {{ world.net_id }}
                     {% if let Some(name) = world.name %}
-                        <br><span style="color:#555;">{{ name }}</span>
+                        <br><span style="color:#555;"><strong>名:</strong> {{ name }}</span>
                     {% endif %}
+                    <br><small style="color:#666; word-break: break-all;">URL: {{ world.url }}</small>
+                </td>
+                <td>
+                    <span>戦略: {{ world.strategy }}</span><br>
+                    <small>
+                        {% if world.persistent %}📌 永続化{% else %}⏳ 一時{% endif %} / 
+                        {% if world.admin_locked %}🔒 ロック有{% else %}🔓 ロック無{% endif %}
+                    </small>
                 </td>
                 <td>
                     <button class="danger" onclick="deleteWorld('{{ world.net_id }}')">❌ Unload</button>
