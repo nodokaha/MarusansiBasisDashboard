@@ -285,6 +285,7 @@ async fn handle_get_players(headers: HeaderMap) -> impl IntoResponse {
     match send_api_request::<()>(reqwest::Method::GET, "/api/players", None).await {
         Ok(res) if res.status().is_success() => {
             let players = res.json::<Vec<Player>>().await.unwrap_or_default();
+            info!("Players: {}", players);
             Html(PlayersInnerTemplate { players, i18n }.render().unwrap()).into_response()
         }
         Ok(res) => {
