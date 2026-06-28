@@ -94,7 +94,7 @@
 
     <script>
         // 非同期リクエスト用ヘルパー
-        async fn apiCall(url, method, body = null) {
+        async function apiCall(url, method, body = null) {
             let options = { method };
             if (body) {
                 options.headers = { 'Content-Type': 'application/json' };
@@ -106,30 +106,30 @@
         }
 
         // HTML部分テンプレートの読み込み
-        async fn loadPlayers() {
+        async function loadPlayers() {
             let res = await fetch('/admin/players');
             if (res.ok) document.getElementById('players-container').innerHTML = await res.text();
         }
-        async fn loadWorlds() {
+        async function loadWorlds() {
             let res = await fetch('/admin/worlds');
             if (res.ok) document.getElementById('worlds-container').innerHTML = await res.text();
         }
 
         // 各種アクション
-        async fn sendAnnounce() {
+        async function sendAnnounce() {
             let message = document.getElementById('announce-msg').value;
             if(!message) return;
             let res = await apiCall('/admin/announce', 'POST', { message });
             if(res.ok) { document.getElementById('announce-msg').value = ''; alert('送信しました'); }
         }
 
-        async fn sendPlayerAnnounce(uuid) {
+        async function sendPlayerAnnounce(uuid) {
             let message = prompt("プレイヤーへのダイレクトメッセージを入力してください:");
             if(!message) return;
             await apiCall(`/admin/announce/${uuid}`, 'POST', { message });
         }
 
-        async fn loadWorldSubmit() {
+        async function loadWorldSubmit() {
             let payload = {
                 url: document.getElementById('load-url').value,
                 password: document.getElementById('load-password').value || null,
@@ -140,7 +140,7 @@
             if(res.ok) { alert('ロード要求を送信しました'); loadWorlds(); }
         }
 
-        async fn switchWorldSubmit() {
+        async function switchWorldSubmit() {
             let payload = {
                 url: document.getElementById('switch-url').value,
                 password: null,
@@ -153,20 +153,20 @@
             if(res.ok) alert('ワールド切り替え要求を送信しました');
         }
 
-        async fn deleteWorld(id) {
+        async function deleteWorld(id) {
             if(!confirm('このワールドをアンロードしますか？')) return;
             let res = await apiCall(`/admin/worlds/${id}`, 'DELETE');
             if(res.ok) loadWorlds();
         }
 
-        async fn clearWorlds() {
+        async function clearWorlds() {
             if(!confirm('本当にすべてのワールドをクリアしますか？')) return;
             let res = await apiCall('/admin/worlds/clear', 'DELETE');
             if(res.ok) loadWorlds();
         }
 
         // 初期読み込み
-        window.onload = fn() {
+        window.onload = function() {
             loadPlayers();
             loadWorlds();
         };
