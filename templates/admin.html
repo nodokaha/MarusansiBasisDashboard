@@ -18,12 +18,17 @@
         button.danger:hover { background: #bd2130; }
         input, select { padding: 8px; margin: 4px 0; box-sizing: border-box; }
         .form-group { margin-bottom: 12px; display: flex; flex-direction: column; }
+        
+        /* 追加: ラジオボタン用のスタイル */
+        .radio-group { display: flex; gap: 15px; margin: 6px 0; }
+        .radio-group label { display: flex; align-items: center; gap: 4px; font-weight: normal; cursor: pointer; }
+        .radio-group input { margin: 0; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>{{ i18n.title }} - Control Panel</h1>
-        
+
         <div class="section">
             <h2>📢 全体アナウンス送信</h2>
             <div class="flex">
@@ -61,13 +66,16 @@
                         <input type="password" id="load-password">
                     </div>
                     <div class="form-group">
-                        <label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
                             <input type="checkbox" id="load-persistent"> 常駐させる (Persistent)
                         </label>
                     </div>
                     <div class="form-group">
                         <label>ストラテジー</label>
-                        <input type="text" id="load-strategy" value="default">
+                        <div class="radio-group">
+                            <label><input type="radio" name="load-strategy" value="synchronized" checked> Synchronized (同期)</label>
+                            <label><input type="radio" name="load-strategy" value="immediate"> Immediate (即時)</label>
+                        </div>
                     </div>
                     <button onclick="loadWorldSubmit()">ワールドをロード</button>
                 </div>
@@ -85,6 +93,13 @@
                     <div class="form-group">
                         <label>遅延（秒: 0〜300）</label>
                         <input type="number" id="switch-delay" value="0" min="0" max="300">
+                    </div>
+                    <div class="form-group">
+                        <label>ストラテジー</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="switch-strategy" value="synchronized" checked> Synchronized (同期)</label>
+                            <label><input type="radio" name="switch-strategy" value="immediate"> Immediate (即時)</label>
+                        </div>
                     </div>
                     <button onclick="switchWorldSubmit()">同期切り替え実行</button>
                 </div>
@@ -129,23 +144,31 @@
             await apiCall(`/admin/announce/${uuid}`, 'POST', { message });
         }
 
+        // 変更点: ラジオボタンの選択状態を取得するように修正
         async function loadWorldSubmit() {
+            const checkedRadio = document.querySelector('input[name="load-strategy"]:checked');
+            const strategyValue = checkedRadio ? checkedRadio.value : "synchronized";
+
             let payload = {
                 url: document.getElementById('load-url').value,
                 password: document.getElementById('load-password').value || null,
                 persistent: document.getElementById('load-persistent').checked,
-                strategy: document.getElementById('load-strategy').value
+                strategy: strategyValue
             };
             let res = await apiCall('/admin/worlds/load', 'POST', payload);
             if(res.ok) { alert('ロード要求を送信しました'); loadWorlds(); }
         }
 
+        // 変更点: ラジオボタンの選択状態を取得するように修正
         async function switchWorldSubmit() {
+            const checkedRadio = document.querySelector('input[name="switch-strategy"]:checked');
+            const strategyValue = checkedRadio ? checkedRadio.value : "synchronized";
+
             let payload = {
                 url: document.getElementById('switch-url').value,
                 password: null,
                 persistent: false,
-                strategy: "default",
+                strategy: strategyValue,
                 announce: document.getElementById('switch-announce').value || null,
                 delay: parseInt(document.getElementById('switch-delay').value, 10)
             };
