@@ -17,7 +17,7 @@
                 <td><code>{{ player.net_id }}</code></td>
                 <td><strong>{{ player.display_name }}</strong><br><small style="color:#666;">{{ player.uuid }}</small></td>
                 <td>{{ player.platform }}</td>
-                <td>{{ player.position }}</td>
+                <td>{{ player.position[0] }}, {{ player.position[1] }}, {{ player.position[2] }}</td>
                 <td>
                     <button onclick="sendPlayerAnnounce('{{ player.uuid }}')">💬 DM</button>
                 </td>

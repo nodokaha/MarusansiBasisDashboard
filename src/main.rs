@@ -75,7 +75,7 @@ pub struct Player {
     #[serde(rename = "displayName")]
     display_name: String,
     platform: String,
-    position: [f32, 3],
+    position: [f32; 3],
 }
 
 #[derive(Deserialize, Debug)]
