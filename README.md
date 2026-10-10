@@ -51,6 +51,7 @@ services:
     environment:
       PORT: 4000
       HEALTH_PORT: 10666
+      API_BEARER_TOKEN: "dummy_token"
     depends_on:
       basis-server:
         condition: service_healthy
