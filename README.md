@@ -2,7 +2,7 @@
 
 ## Live Demo
 You can access the live dashboard here:
-http://marusankakusikakuonline.com:4000/
+http://maru.marusankakusikakuonline.com/
 
 ## Screenshot
 ![Dashboard Screenshot](./ss.png)
