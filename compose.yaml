@@ -17,7 +17,6 @@ services:
       - '10666:10666/tcp'
       - '10667:10667/tcp'
       - '1234:1234/tcp'
-      - '4000:4000/tcp'
     volumes:
       - './initialresources:/app/initialresources:ro'
       - './config:/app/config'
@@ -38,12 +37,13 @@ services:
       context: .
     container_name: dashboard
     restart: unless-stopped
-    network_mode: "service:basis-server"
+    ports:
+      - '4000:4000/tcp'
     environment:
       PORT: 4000
-      HEALTH_PORT: 10666
-      API_URL_BASE: http://localhost:10667
-      API_BEARER_TOKEN: test_api_key
+      HEALTH_URL: http://basis-server:10666/health
+      API_URL_BASE: http://basis-server:10667
+      API_BEARER_TOKEN: ${BASIS_API_TOKEN:?Set BASIS_API_TOKEN in the deployment environment}
     depends_on:
       basis-server:
         condition: service_healthy
