@@ -8,7 +8,6 @@ use axum::{
 use axum::extract::Path;
 use reqwest::header::AUTHORIZATION;
 use tracing_subscriber::EnvFilter;
-use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use axum::http::{HeaderMap, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -151,10 +150,6 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(filter)
         .init();
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::DELETE]);
-
     let port: u16 = env::var("PORT")
         .unwrap_or_else(|_| "4000".to_string())
         .parse()
@@ -173,7 +168,6 @@ async fn main() {
         .route("/admin/worlds/{net_id}", axum::routing::delete(handle_delete_world))
         .route("/admin/announce", axum::routing::post(handle_announce_all))
         .route("/admin/announce/{uuid}", axum::routing::post(handle_announce_user))
-        .layer(cors)
         .layer(TraceLayer::new_for_http());
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
@@ -204,10 +198,14 @@ async fn send_api_request<T: Serialize>(
     body: Option<T>,
 ) -> Result<reqwest::Response, String> {
     let api_base = env::var("API_URL_BASE").unwrap_or_else(|_| "http://localhost:10667".to_string());
-    let token = env::var("API_BEARER_TOKEN").unwrap_or_else(|_| "default_token".to_string());
+    let token = env::var("API_BEARER_TOKEN")
+        .map_err(|_| "API_BEARER_TOKEN must be set for administrative API access".to_string())?;
+    if token.trim().is_empty() {
+        return Err("API_BEARER_TOKEN must not be empty".to_string());
+    }
 
     let client = reqwest::Client::new();
-    let url = format!("{}{}", api_base, path);
+    let url = format!("{}{}", api_base.trim_end_matches('/'), path);
 
     info!("Sending internal API request: {} {}", method, url);
 
@@ -234,7 +232,8 @@ async fn send_api_request<T: Serialize>(
 
 async fn fetch_health_data() -> Result<BasisHealthResponse, String> {
     let health_port = env::var("HEALTH_PORT").unwrap_or_else(|_| "10666".to_string());
-    let api_url = format!("http://localhost:{}/health", health_port);
+    let api_url = env::var("HEALTH_URL")
+        .unwrap_or_else(|_| format!("http://localhost:{}/health", health_port));
 
     info!("Fetching health data from: {}", api_url);
 
